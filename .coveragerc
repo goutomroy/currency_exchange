@@ -1,0 +1,22 @@
+# .coveragerc to control coverage.py
+[run]
+branch = True
+source = .
+
+[report]
+omit =
+    currency_exchange/asgi.py
+    currency_exchange/routing.py
+    currency_exchange/wsgi.py
+    currency_exchange/asgi.py
+    currency_exchange/settings.py
+    */migrations/*
+    */tests/*
+    */apps.py
+
+exclude_lines =
+    def __str__
+
+[html]
+title = "Currency exchange Service coverage report"
+directory = coverage_report

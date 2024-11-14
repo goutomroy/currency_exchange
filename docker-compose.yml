@@ -1,0 +1,29 @@
+services:
+
+  mysql:
+    image: mysql:9.1.0
+    container_name: currency_exchange_mysql
+    ports:
+      - '3306:3306'
+    volumes:
+      - /var/currency_exchange_service/mysql_data:/var/lib/mysql
+    env_file:
+      - .envs/.env.dev
+
+    restart: always
+    networks:
+      - back-tier
+
+  redis:
+    image: redis:7.0.4-alpine
+    container_name: currency_exchange_redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - /var/currency_exchange_service/redis_data:/data
+    networks:
+      - back-tier
+
+networks:
+  back-tier:
+    driver: bridge
