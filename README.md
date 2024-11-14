@@ -42,9 +42,9 @@ Run following commands to see report.
 ## Endpoints
 
 ### Currency
-http://127.0.0.1:8000/api/currency/
-http://127.0.0.1:8000/api/currency/?ordering=code
-http://127.0.0.1:8000/api/currency/?ordering=-code
+* http://127.0.0.1:8000/api/currency/
+* http://127.0.0.1:8000/api/currency/?ordering=code
+* http://127.0.0.1:8000/api/currency/?ordering=-code
 
 ### Exchange Rate
 http://127.0.0.1:8000/api/currency/ABC/USD/
