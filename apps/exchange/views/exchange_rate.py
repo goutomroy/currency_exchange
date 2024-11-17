@@ -1,3 +1,6 @@
+from django.conf import settings
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework import generics
 from rest_framework.exceptions import NotFound
 
@@ -38,3 +41,9 @@ class ExchangeRateDetailView(generics.RetrieveAPIView):
             raise NotFound("Exchange rate not found.")
 
         return exchange_rate
+
+    @method_decorator(
+        cache_page(None, key_prefix=settings.CACHE_KEY_PREFIX_EXCHANGE_RATE)
+    )  # cache response for forever
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework import filters, generics
@@ -19,6 +20,8 @@ class CurrencyListView(generics.ListAPIView):
     def get_queryset(self):
         return super().get_queryset().order_by("code")
 
-    @method_decorator(cache_page(60 * 60 * 24))  # cache response for 24 hours
+    @method_decorator(
+        cache_page(None, key_prefix=settings.CACHE_KEY_PREFIX_AVAILABLE_CURRENCIES)
+    )  # cache response for forever
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)

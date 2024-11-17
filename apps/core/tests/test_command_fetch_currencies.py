@@ -9,9 +9,12 @@ from apps.exchange.models.currency import Currency
 
 
 class FetchCurrenciesCommandTests(TestCase):
+    @patch("apps.core.management.commands.fetch_currencies.Command._invalidate_cache")
     @patch("apps.core.management.commands.fetch_currencies.requests.get")
     @patch("apps.core.management.commands.fetch_currencies.logger")
-    def test_successful_fetch_and_save(self, mock_logger, mock_get):
+    def test_successful_fetch_and_save(
+        self, mock_logger, mock_get, mock_invalidate_cache
+    ):
         """Test that currencies are successfully fetched and saved to the database."""
         # Mock successful API response
         mock_response = MagicMock()
@@ -48,10 +51,13 @@ class FetchCurrenciesCommandTests(TestCase):
         mock_logger.info.assert_any_call(
             "Currencies uploaded successfully to the database."
         )
+        # Assert cache invalidation was called
+        mock_invalidate_cache.assert_called_once()
 
+    @patch("apps.core.management.commands.fetch_currencies.Command._invalidate_cache")
     @patch("apps.core.management.commands.fetch_currencies.requests.get")
     @patch("apps.core.management.commands.fetch_currencies.logger")
-    def test_api_error_handling(self, mock_logger, mock_get):
+    def test_api_error_handling(self, mock_logger, mock_get, mock_invalidate_cache):
         """Test that the command logs an error when the API response code is not 200."""
         # Mock API response with error code
         mock_response = MagicMock()
@@ -67,9 +73,12 @@ class FetchCurrenciesCommandTests(TestCase):
         )
         self.assertEqual(Currency.objects.count(), 0)
 
+    @patch("apps.core.management.commands.fetch_currencies.Command._invalidate_cache")
     @patch("apps.core.management.commands.fetch_currencies.requests.get")
     @patch("apps.core.management.commands.fetch_currencies.logger")
-    def test_empty_response_handling(self, mock_logger, mock_get):
+    def test_empty_response_handling(
+        self, mock_logger, mock_get, mock_invalidate_cache
+    ):
         """Test that the command handles an empty 'response' key gracefully."""
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -82,9 +91,12 @@ class FetchCurrenciesCommandTests(TestCase):
         mock_logger.error.assert_called_with("Empty response: No item in response")
         self.assertEqual(Currency.objects.count(), 0)
 
+    @patch("apps.core.management.commands.fetch_currencies.Command._invalidate_cache")
     @patch("apps.core.management.commands.fetch_currencies.requests.get")
     @patch("apps.core.management.commands.fetch_currencies.logger")
-    def test_request_exception_handling(self, mock_logger, mock_get):
+    def test_request_exception_handling(
+        self, mock_logger, mock_get, mock_invalidate_cache
+    ):
         """Test that the command logs an error when a network exception occurs."""
         # Simulate a network exception
         mock_get.side_effect = requests.RequestException("Network error")
@@ -97,9 +109,12 @@ class FetchCurrenciesCommandTests(TestCase):
         )
         self.assertEqual(Currency.objects.count(), 0)
 
+    @patch("apps.core.management.commands.fetch_currencies.Command._invalidate_cache")
     @patch("apps.core.management.commands.fetch_currencies.requests.get")
     @patch("apps.core.management.commands.fetch_currencies.logger")
-    def test_currency_update_existing(self, mock_logger, mock_get):
+    def test_currency_update_existing(
+        self, mock_logger, mock_get, mock_invalidate_cache
+    ):
         """Test that existing currency data is updated if it already exists."""
         # Create initial currency object with different data
         currency = baker.make(

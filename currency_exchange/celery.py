@@ -13,13 +13,14 @@ class Config:
     broker_url = (settings.REDIS_CONNECTION_STRING,)
     beat_scheduler = "django_celery_beat.schedulers:DatabaseScheduler"
     result_backend = "django-db"
-    beat_max_loop_interval = 600
+    beat_max_loop_interval = 5
     result_cache_max = 1000
     soft_time_limit = 5
     # worker_concurrency = 4
     task_compression = "gzip"
     result_compression = "gzip"
     result_persistent = True
+    result_extended = True
     task_track_started = True
     task_publish_retry = True
     task_publish_retry_policy = {

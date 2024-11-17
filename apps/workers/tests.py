@@ -1,4 +1,5 @@
 import os
+from decimal import Decimal
 from unittest.mock import MagicMock, call, patch
 
 import requests
@@ -12,9 +13,7 @@ from apps.workers.tasks import fetch_from_currency, root_fetcher
 
 
 class RootFetcherTaskTests(TestCase):
-    @patch(
-        "apps.workers.tasks.fetch_from_currency.delay"
-    )  # Mock the task function itself
+    @patch("apps.workers.tasks.fetch_from_currency.delay")
     @patch("apps.workers.tasks.logger")
     def test_root_fetcher_task_execution(self, mock_logger, mock_fetch_from_currency):
         """Test that root_fetcher task initiates fetch_from_currency for all currency pairs."""
@@ -24,9 +23,9 @@ class RootFetcherTaskTests(TestCase):
 
         # Expected calls to fetch_from_currency
         expected_calls = [
-            call("EUR", "JPY,PLN,USD"),
-            call("JPY", "PLN,USD"),
-            call("PLN", "USD"),
+            call("EUR", "JPY,PLN,USD", (0, 2)),
+            call("JPY", "PLN,USD", (1, 2)),
+            call("PLN", "USD", (2, 2)),
         ]
 
         # Check that fetch_from_currency was called with expected arguments
@@ -37,9 +36,12 @@ class RootFetcherTaskTests(TestCase):
 
 
 class FetchFromCurrencyTaskTests(TestCase):
+    @patch("apps.workers.tasks.invalidate_cache")
     @patch("apps.workers.tasks.requests.get")
     @patch("apps.workers.tasks.logger")
-    def test_successful_fetch_and_save(self, mock_logger, mock_get):
+    def test_successful_fetch_and_save(
+        self, mock_logger, mock_get, mock_invalidate_cache
+    ):
         """Test that exchange rates are fetched and saved successfully."""
 
         # Setup mock API response
@@ -50,7 +52,7 @@ class FetchFromCurrencyTaskTests(TestCase):
             "response": {
                 "date": "2024-10-15",
                 "base": "EUR",
-                "rates": {"JPY": 162.4858, "PLN": 4.2933, "USD": 1.0892},
+                "rates": {"JPY": 162.48584858, "PLN": 4.29332933, "USD": 1.08920892},
             },
         }
         mock_get.return_value = mock_response
@@ -62,7 +64,7 @@ class FetchFromCurrencyTaskTests(TestCase):
         usd_currency = baker.make(Currency, code="USD")
 
         # Run task
-        fetch_from_currency("EUR", "JPY,PLN,USD")
+        fetch_from_currency("EUR", "JPY,PLN,USD", (10, 10))
 
         # Assert API request call
         mock_get.assert_called_once_with(
@@ -81,43 +83,52 @@ class FetchFromCurrencyTaskTests(TestCase):
             ExchangeRate.objects.filter(
                 base_currency=eur_currency,
                 target_currency=jpy_currency,
-                # rate=Decimal("162.4858"),
+                rate=Decimal("162.48584858"),
             ).exists()
         )
         self.assertTrue(
             ExchangeRate.objects.filter(
                 base_currency=eur_currency,
                 target_currency=pln_currency,
-                # rate=Decimal("4.2933"),
+                rate=Decimal("4.29332933"),
             ).exists()
         )
         self.assertTrue(
             ExchangeRate.objects.filter(
                 base_currency=eur_currency,
                 target_currency=usd_currency,
-                # rate=Decimal("1.0892"),
+                rate=Decimal("1.08920892"),
             ).exists()
         )
 
         # # Assert logging
-        mock_logger.info.assert_any_call("Exchange rate saved: EUR to JPY = 162.4858")
-        mock_logger.info.assert_any_call("Exchange rate saved: EUR to PLN = 4.2933")
-        # mock_logger.info.assert_any_call("Exchange rate saved: EUR to USD = 1.0892")
+        mock_logger.info.assert_any_call(
+            "Exchange rate saved: EUR to JPY = 162.48584858"
+        )
+        mock_logger.info.assert_any_call("Exchange rate saved: EUR to PLN = 4.29332933")
+        mock_logger.info.assert_any_call("Exchange rate saved: EUR to USD = 1.08920892")
 
+        # Assert cache is invalidated
+        mock_invalidate_cache.assert_called_once()
+
+    @patch("apps.workers.tasks.invalidate_cache")
     @patch("apps.workers.tasks.requests.get")
     @patch("apps.workers.tasks.logger")
-    def test_missing_base_currency(self, mock_logger, mock_get):
+    def test_missing_base_currency(self, mock_logger, mock_get, mock_invalidate_cache):
         """Test that task logs a warning when the base currency is not found."""
         # No EUR currency in database
-        fetch_from_currency("EUR", "USD")
+        fetch_from_currency("EUR", "USD", (1, 2))
 
         # Assert warning log for missing base currency
         mock_logger.warning.assert_called_once_with("Base currency not found: EUR")
         self.assertEqual(ExchangeRate.objects.count(), 0)
 
+    @patch("apps.workers.tasks.invalidate_cache")
     @patch("apps.workers.tasks.requests.get")
     @patch("apps.workers.tasks.logger")
-    def test_missing_target_currency(self, mock_logger, mock_get):
+    def test_missing_target_currency(
+        self, mock_logger, mock_get, mock_invalidate_cache
+    ):
         """Test that task logs a warning when a target currency is not found."""
         # Create only the base currency EUR
         baker.make(Currency, code="EUR")
@@ -127,19 +138,22 @@ class FetchFromCurrencyTaskTests(TestCase):
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "meta": {"code": 200},
-            "response": {"rates": {"USD": 1.0892}},
+            "response": {"rates": {"USD": 1.08920892}},
         }
         mock_get.return_value = mock_response
 
-        fetch_from_currency("EUR", "USD")
+        fetch_from_currency("EUR", "USD", (1, 2))
 
         # Assert warning log for missing target currency
         mock_logger.warning.assert_called_once_with("Target currency not found: USD")
         self.assertEqual(ExchangeRate.objects.count(), 0)
 
+    @patch("apps.workers.tasks.invalidate_cache")
     @patch("apps.workers.tasks.requests.get")
     @patch("apps.workers.tasks.logger")
-    def test_empty_rate_data_handling(self, mock_logger, mock_get):
+    def test_empty_rate_data_handling(
+        self, mock_logger, mock_get, mock_invalidate_cache
+    ):
         """Test that task handles empty 'rates' data in the API response."""
         # Create base currency
         baker.make(Currency, code="EUR")
@@ -153,7 +167,7 @@ class FetchFromCurrencyTaskTests(TestCase):
         }
         mock_get.return_value = mock_response
 
-        fetch_from_currency("EUR", "USD")
+        fetch_from_currency("EUR", "USD", (1, 2))
 
         # Assert error log for empty rates data
         mock_logger.error.assert_called_once_with(
@@ -161,14 +175,17 @@ class FetchFromCurrencyTaskTests(TestCase):
         )
         self.assertEqual(ExchangeRate.objects.count(), 0)
 
+    @patch("apps.workers.tasks.invalidate_cache")
     @patch("apps.workers.tasks.requests.get")
     @patch("apps.workers.tasks.logger")
-    def test_api_request_failure_handling(self, mock_logger, mock_get):
+    def test_api_request_failure_handling(
+        self, mock_logger, mock_get, mock_invalidate_cache
+    ):
         """Test that task handles API request failures gracefully."""
         # Simulate request exception
         mock_get.side_effect = requests.RequestException("Network error")
 
-        fetch_from_currency("EUR", "USD")
+        fetch_from_currency("EUR", "USD", (1, 2))
 
         # Assert error log for request failure
         mock_logger.error.assert_called_once_with(

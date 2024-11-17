@@ -33,7 +33,7 @@ export BEACON_API_KEY=*************
 * make test
 
 ## Tests and Coverage
-I wrote overall 17 tests and code coverage percentage is 98% .
+I wrote overall **17 tests and code coverage percentage is 98%**.
 Run following commands to see report.
 * coverage run manage.py test
 * coverage report

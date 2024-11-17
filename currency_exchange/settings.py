@@ -185,6 +185,17 @@ REDIS_CONNECTION_STRING = os.environ.get(
     "REDIS_CONNECTION_STRING", "redis://localhost:6379"
 )
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_CONNECTION_STRING,  # noqa
+    }
+}
+
+# cache key prefix
+CACHE_KEY_PREFIX_AVAILABLE_CURRENCIES = "available_currencies"
+CACHE_KEY_PREFIX_EXCHANGE_RATE = "exchange_rate"
+
 # DRF settings
 
 REST_FRAMEWORK = {

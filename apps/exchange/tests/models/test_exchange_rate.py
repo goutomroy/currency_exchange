@@ -14,6 +14,5 @@ class ExchangeRateModelTests(APITestCase):
             ExchangeRate,
             base_currency=base_currency,
             target_currency=target_currency,
-            rate=1.3,
         )
         self.assertEqual(ExchangeRate.objects.count(), 1)

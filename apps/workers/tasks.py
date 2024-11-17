@@ -1,9 +1,11 @@
 import logging
 import os
-from decimal import ROUND_DOWN, Decimal
+from decimal import ROUND_HALF_EVEN, Decimal
 
 import requests
 from celery import shared_task
+from django.conf import settings
+from django.core.cache import cache
 from django.db import IntegrityError
 from django.utils import timezone
 
@@ -25,11 +27,15 @@ def root_fetcher():
 
     for index in range(len(pairs) - 1):
         from_currency, to_currencies = pairs[index], pairs[index + 1 :]
-        fetch_from_currency.delay(from_currency, ",".join(to_currencies))
+        fetch_from_currency.delay(
+            from_currency, ",".join(to_currencies), (index, len(pairs) - 2)
+        )
 
 
 @shared_task
-def fetch_from_currency(from_currency: str, symbols: str):
+def fetch_from_currency(
+    from_currency: str, symbols: str, cache_invalidator_indicator: tuple
+):
     logger.info(f"{from_currency}  {symbols}")
     date = timezone.now().strftime("%Y-%m-%d")
     params = {
@@ -45,7 +51,6 @@ def fetch_from_currency(from_currency: str, symbols: str):
     except requests.RequestException as e:
         logger.error(f"API request failed for {from_currency} to {symbols}: {e}")
         return
-    logger.info(response.json())
     data = response.json().get("response", {}).get("rates", {})
     if not data:
         logger.error(
@@ -66,7 +71,7 @@ def fetch_from_currency(from_currency: str, symbols: str):
 
         try:
             rate_value = Decimal(rate_value).quantize(
-                Decimal("0.0001"), rounding=ROUND_DOWN
+                Decimal("0.00000000"), rounding=ROUND_HALF_EVEN
             )
             ExchangeRate.objects.create(
                 base_currency=base_currency,
@@ -78,7 +83,16 @@ def fetch_from_currency(from_currency: str, symbols: str):
             logger.info(
                 f"Exchange rate saved: {from_currency} to {to_currency_code} = {rate_value}"  # noqa
             )
+
         except IntegrityError as e:
             logger.error(
                 f"Database error saving rate {from_currency} to {to_currency_code}: {e}"
             )
+    # delete cache if it's a last task
+    if cache_invalidator_indicator[0] == cache_invalidator_indicator[1]:
+        invalidate_cache()
+
+
+def invalidate_cache():
+    cache.delete_pattern(f"*{settings.CACHE_KEY_PREFIX_EXCHANGE_RATE}:*")
+    logger.info(f"{settings.CACHE_KEY_PREFIX_EXCHANGE_RATE} cache invalidated")

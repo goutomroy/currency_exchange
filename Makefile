@@ -4,7 +4,7 @@ run:
 	PYTHONPATH=$(SERVICE_SRC_DIR) python manage.py runserver
 
 test:
-	PYTHONPATH=$(SERVICE_SRC_DIR) python manage.py test
+	PYTHONPATH=$(SERVICE_SRC_DIR) python manage.py test --settings=currency_exchange.settings_test
 
 migrations:
 	PYTHONPATH=$(SERVICE_SRC_DIR) python manage.py makemigrations

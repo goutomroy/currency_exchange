@@ -2,6 +2,8 @@ import logging
 import os
 
 import requests
+from django.conf import settings
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 
 from apps.exchange.models.currency import Currency
@@ -20,6 +22,7 @@ class Command(BaseCommand):
         currencies = self._fetch_currencies()
         if currencies:
             self._save_currencies(currencies)
+            self._invalidate_cache()
 
     def _fetch_currencies(self):
         """Fetches currency data from the Currency Beacon API."""
@@ -62,4 +65,11 @@ class Command(BaseCommand):
                     "thousands_separator": currency_data["thousands_separator"],
                 },
             )
+
         logger.info("Currencies uploaded successfully to the database.")
+
+    def _invalidate_cache(self):
+        cache.delete_pattern(f"*{settings.CACHE_KEY_PREFIX_AVAILABLE_CURRENCIES}:*")
+        logger.info(
+            f"{settings.CACHE_KEY_PREFIX_AVAILABLE_CURRENCIES} cache invalidated"
+        )
