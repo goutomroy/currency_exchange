@@ -67,4 +67,4 @@ class ExchangeRateDetailViewTests(APITestCase):
 
         # Verify response status and error message
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn("Base Currency 'ABC' not found.", response.data["detail"])
+        self.assertIn("Base currency 'ABC' not found.", response.data["detail"])

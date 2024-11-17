@@ -4,29 +4,21 @@ from django.views.decorators.cache import cache_page
 from rest_framework import generics
 from rest_framework.exceptions import NotFound
 
-from apps.exchange.models.currency import Currency
 from apps.exchange.models.exchange_rate import ExchangeRate
 from apps.exchange.serializers.exchange_rate import ExchangeRateSerializer
+from apps.exchange.views.mixins import CurrencyValidationMixin
 
 
-class ExchangeRateDetailView(generics.RetrieveAPIView):
+class ExchangeRateDetailView(CurrencyValidationMixin, generics.RetrieveAPIView):
     serializer_class = ExchangeRateSerializer
 
     def get_queryset(self):
-        base_currency_code = self.kwargs["base_currency_code"]
-        target_currency_code = self.kwargs["target_currency_code"]
-
-        try:
-            base_currency = Currency.objects.get(code=base_currency_code)
-        except Currency.DoesNotExist:
-            raise NotFound(f"Base Currency '{base_currency_code}' not found.")  # noqa
-
-        try:
-            target_currency = Currency.objects.get(code=target_currency_code)
-        except Currency.DoesNotExist:
-            raise NotFound(
-                f"Target Currency '{target_currency_code}' not found."  # noqa
-            )
+        base_currency = self.get_currency(
+            self.kwargs["base_currency_code"], "Base currency"
+        )
+        target_currency = self.get_currency(
+            self.kwargs["target_currency_code"], "Target currency"
+        )
 
         return (
             ExchangeRate.objects.select_related("base_currency", "target_currency")

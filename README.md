@@ -10,7 +10,7 @@
 
 
 ## Steps to run
-Before running **runserver, celery, fetch_currencies** you need to export **BEACON_API_KEY** in terminal
+Before running **runserver, celery, fetch_currencies** you need to export **BEACON_API_KEY** in terminal.
 export BEACON_API_KEY=*************
 
 ### In a new terminal
