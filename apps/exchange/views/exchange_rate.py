@@ -4,19 +4,19 @@ from django.views.decorators.cache import cache_page
 from rest_framework import generics
 from rest_framework.exceptions import NotFound
 
+from apps.exchange.models.currency import Currency
 from apps.exchange.models.exchange_rate import ExchangeRate
 from apps.exchange.serializers.exchange_rate import ExchangeRateSerializer
-from apps.exchange.views.mixins import CurrencyValidationMixin
 
 
-class ExchangeRateDetailView(CurrencyValidationMixin, generics.RetrieveAPIView):
+class ExchangeRateDetailView(generics.RetrieveAPIView):
     serializer_class = ExchangeRateSerializer
 
     def get_queryset(self):
-        base_currency = self.get_currency(
+        base_currency = self._validate_currency(
             self.kwargs["base_currency_code"], "Base currency"
         )
-        target_currency = self.get_currency(
+        target_currency = self._validate_currency(
             self.kwargs["target_currency_code"], "Target currency"
         )
 
@@ -39,3 +39,9 @@ class ExchangeRateDetailView(CurrencyValidationMixin, generics.RetrieveAPIView):
     )  # cache response for forever
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+    def _validate_currency(self, code: str, currency_type: str):
+        try:
+            return Currency.objects.get(code=code)
+        except Currency.DoesNotExist:
+            raise NotFound(f"{currency_type} '{code}' not found.")
