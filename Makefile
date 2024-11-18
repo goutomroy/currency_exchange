@@ -4,7 +4,10 @@ run:
 	PYTHONPATH=$(SERVICE_SRC_DIR) python manage.py runserver
 
 test:
-	PYTHONPATH=$(SERVICE_SRC_DIR) python manage.py test --settings=currency_exchange.settings_test
+	PYTHONPATH=$(SERVICE_SRC_DIR) coverage run manage.py test --settings=currency_exchange.settings_test
+
+coverage:
+	PYTHONPATH=$(SERVICE_SRC_DIR) coverage report
 
 migrations:
 	PYTHONPATH=$(SERVICE_SRC_DIR) python manage.py makemigrations

@@ -3,6 +3,7 @@
 * **make migrations**
 * **make migrate**
 * **make test**
+* **make coverage**
 * **make celery**
 
 ### Management command
