@@ -93,16 +93,6 @@ WSGI_APPLICATION = "currency_exchange.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    # "default": {
-    #     "ENGINE": "mysql.connector.django",
-    #     "NAME": os.environ.get("MYSQL_DATABASE", "currency_exchange"),
-    #     "USER": os.environ.get("MYSQL_USER", "currency_exchange"),
-    #     "PASSWORD": os.environ.get("MYSQL_PASSWORD", "123456"),
-    #     "HOST": os.environ.get("MYSQL_HOST", "localhost"),
-    #     "PORT": os.environ.get("MYSQL_PORT", "3306"),
-    #     "ATOMIC_REQUESTS": True,
-    #     "CONN_MAX_AGE": 60 * 10,
-    # },
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.environ.get("POSTGRES_DB", "currency_exchange"),

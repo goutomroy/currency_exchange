@@ -13,9 +13,6 @@ celery==5.3.4
 django-celery-results==2.5.1
 django-celery-beat==2.5.0
 
-# Database
-# mysql-connector-python==9.1.0
-
 # postgres database
 psycopg2-binary==2.9.9
 
