@@ -1,30 +1,33 @@
 services:
 
   postgres:
-    image: postgis/postgis:14-master
-    container_name: ticket_world_postgres
+    image: postgres:15.3-alpine
+    container_name: currency_exchange_postgres
     ports:
       - "5433:5432"
     volumes:
-    - /var/ticket_world/database-data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: "ticket_world"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "postgres"
-
-  mysql:
-    image: mysql:9.1.0
-    container_name: currency_exchange_mysql
-    ports:
-      - '3306:3306'
-    volumes:
-      - /var/currency_exchange_service/mysql_data:/var/lib/mysql
+    - /var/currency_exchange_service/database-data:/var/lib/postgresql/data
+#    environment:
+#      POSTGRES_DB: "currency_exchange"
+#      POSTGRES_USER: "postgres"
+#      POSTGRES_PASSWORD: "postgres"
     env_file:
       - .envs/.env.dev
 
-    restart: always
-    networks:
-      - back-tier
+
+#  mysql:
+#    image: mysql:9.1.0
+#    container_name: currency_exchange_mysql
+#    ports:
+#      - '3306:3306'
+#    volumes:
+#      - /var/currency_exchange_service/mysql_data:/var/lib/mysql
+#    env_file:
+#      - .envs/.env.dev
+#
+#    restart: always
+#    networks:
+#      - back-tier
 
   redis:
     image: redis:7.0.4-alpine
