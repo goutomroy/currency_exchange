@@ -12,7 +12,7 @@ from django.utils import timezone
 from apps.exchange.models.currency import Currency
 from apps.exchange.models.exchange_rate import ExchangeRate
 
-logger = logging.getLogger("workers")
+logger = logging.getLogger(__name__)
 
 API_URL = "https://api.currencybeacon.com/v1/historical"
 API_KEY = os.environ.get("BEACON_API_KEY", "")
