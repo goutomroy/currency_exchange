@@ -1,10 +1,12 @@
+import requests
+from celery import shared_task
+from django.conf import settings
+
 import logging
 import os
 from decimal import ROUND_HALF_EVEN, Decimal
 
-import requests
-from celery import shared_task
-from django.conf import settings
+
 from django.core.cache import cache
 from django.db import IntegrityError
 from django.utils import timezone
